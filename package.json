@@ -1,0 +1,24 @@
+{
+  "name": "tree-sitter-pluto",
+  "version": "0.1.0",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Komo",
+      "email": "afiqquraisyzulkarnain@gmail.com"
+    }
+  ],
+  "links": {
+    "source": "https://github.com/mbekkomo/tree-sitter-pluto",
+    "homepage": "https://github.com/mbekkomo/tree-sitter-pluto#readme"
+  },
+  "namespace": "io.github.mbekkomo.tree-sitter-pluto",
+  "devDependencies": {
+    "@danielx/civet": "^0.8.15",
+    "tree-sitter-cli": "^0.24.4"
+  },
+  "scripts": {
+    "build": "tree-sitter generate && node-gyp build"
+  },
+  "main": "bindings/node"
+}
