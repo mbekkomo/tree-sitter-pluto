@@ -18,7 +18,7 @@ enum Precedence
 	ArithDiv    // L -> * / // %
 	ArithPrefix // L -> ++
 	Unary       // L -> not ! # + - ~
-	Power       // L -> ^
+	Power       // R -> ^
 
 	Statement
 	Program
