@@ -8,7 +8,7 @@ enum Precedence
 
 	Or          // L -> or ??
 	And         // L -> and
-	Cmp         // L -> < > <= >= ~= == <=> instanceof
+	Cmp         // L -> == ~= != < > <= >= ~= == <=> instanceof
 	Bor         // L -> |
 	Bxor        // L -> ~
 	Band        // L -> &
@@ -16,16 +16,78 @@ enum Precedence
 	Concat      // R -> ..
 	Arith       // L -> + -
 	ArithDiv    // L -> * / // %
-	ArithPrefix // L -> ++
-	Unary       // L -> not ! # + - ~
+	Unary       // L -> not new pluto_new ! # + - ~ ++
 	Power       // R -> ^
+	In          // L -> in
 
 	Statement
 	Program
 
-$ = (x) => x
 module.exports = grammar
 	name: "pluto"
+
+	extras: => []
+		/[\n]/
+		/\s/
+	
 	rules:
-		chunk: $ ._any
-		_any: => repeat1 /./
+		chunk: ($) => $._expression
+
+		_expression: ($) => choice $.nil, $.boolean, $.binary_operation, $.unary_operation, (seq "(", $._expression, ")")
+	
+		nil: => "nil"
+		
+		boolean: => choice "true", "false"
+
+		binary_operation: ($) => choice
+			...([]
+				["or",  Precedence.Or]
+				["??",  Precedence.Or]
+				["and", Precedence.And]
+				["==",  Precedence.Cmp]
+				["~=",  Precedence.Cmp]
+				["!=",  Precedence.Cmp]
+				["<",   Precedence.Cmp]
+				[">",   Precedence.Cmp]
+				["<=",  Precedence.Cmp]
+				[">=",  Precedence.Cmp]
+				["<=>", Precedence.Cmp]
+				["instanceof", Precedence.Cmp]
+				["|",  Precedence.Bor]
+				["~",  Precedence.Bxor]
+				["&",  Precedence.Band]
+				["<<", Precedence.Bshift]
+				[">>", Precedence.Bshift]
+				["+",  Precedence.Arith]
+				["-",  Precedence.Arith]
+				["*",  Precedence.ArithDiv]
+				["/",  Precedence.ArithDiv]
+				["//", Precedence.ArithDiv]
+				["%",  Precedence.ArithDiv	]
+				["in", Precedence.In]
+			).map precedence $, "left"
+			...([]
+				["..", Precedence.Concat]
+				["^", Precedence.Power]
+			).map precedence $, "right"
+
+		unary_operation: ($) =>
+			prec.left Precedence.Unary, seq (choice
+				...(plutoKeyword "new"),
+				"not",
+				"!",
+				"#",
+				"-",
+				"~",
+				"++",
+			), $._expression
+
+
+function precedence($, x)
+	[op, preced] => prec[x] preced, seq $._expression, op, $._expression
+
+function plutoKeyword(x)
+	[x, `pluto_${x}`]
+
+function choosePlutoKeyword(x)
+	choose ...plutoKeyword x
