@@ -1,11 +1,15 @@
 {
   "name": "pluto",
   "rules": {
-    "program": {
-      "type": "REPEAT",
+    "chunk": {
+      "type": "SYMBOL",
+      "name": "_any"
+    },
+    "_any": {
+      "type": "REPEAT1",
       "content": {
         "type": "PATTERN",
-        "value": "\\w"
+        "value": "."
       }
     }
   },

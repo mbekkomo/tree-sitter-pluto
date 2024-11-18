@@ -50,6 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
 # Devenv
 .devenv*
 devenv.local.nix
@@ -61,3 +62,4 @@ devenv.local.nix
 .pre-commit-config.yaml
 
 node_modules
+/grammar.js

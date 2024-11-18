@@ -1,7 +1,31 @@
 "civet autoConst"
 
-_ = (x) => x
+enum Precedence
+	Comma = -1
+	Function = 1
+	Default = 1
+	Priority
+
+	Or          // L -> or ??
+	And         // L -> and
+	Cmp         // L -> < > <= >= ~= == <=> instanceof
+	Bor         // L -> |
+	Bxor        // L -> ~
+	Band        // L -> &
+	Bshift      // L -> << >>
+	Concat      // R -> ..
+	Arith       // L -> + -
+	ArithDiv    // L -> * / // %
+	ArithPrefix // L -> ++
+	Unary       // L -> not ! # + - ~
+	Power       // L -> ^
+
+	Statement
+	Program
+
+$ = (x) => x
 module.exports = grammar
 	name: "pluto"
 	rules:
-		program: _ => repeat /\w/
+		chunk: $ ._any
+		_any: => repeat1 /./

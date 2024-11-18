@@ -17,23 +17,23 @@
 #define PRODUCTION_ID_COUNT 1
 
 enum ts_symbol_identifiers {
-  aux_sym_program_token1 = 1,
-  sym_program = 2,
-  aux_sym_program_repeat1 = 3,
+  aux_sym__any_token1 = 1,
+  sym_chunk = 2,
+  aux_sym__any = 3,
 };
 
 static const char * const ts_symbol_names[] = {
   [ts_builtin_sym_end] = "end",
-  [aux_sym_program_token1] = "program_token1",
-  [sym_program] = "program",
-  [aux_sym_program_repeat1] = "program_repeat1",
+  [aux_sym__any_token1] = "_any_token1",
+  [sym_chunk] = "chunk",
+  [aux_sym__any] = "_any",
 };
 
 static const TSSymbol ts_symbol_map[] = {
   [ts_builtin_sym_end] = ts_builtin_sym_end,
-  [aux_sym_program_token1] = aux_sym_program_token1,
-  [sym_program] = sym_program,
-  [aux_sym_program_repeat1] = aux_sym_program_repeat1,
+  [aux_sym__any_token1] = aux_sym__any_token1,
+  [sym_chunk] = sym_chunk,
+  [aux_sym__any] = aux_sym__any,
 };
 
 static const TSSymbolMetadata ts_symbol_metadata[] = {
@@ -41,15 +41,15 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
     .visible = false,
     .named = true,
   },
-  [aux_sym_program_token1] = {
+  [aux_sym__any_token1] = {
     .visible = false,
     .named = false,
   },
-  [sym_program] = {
+  [sym_chunk] = {
     .visible = true,
     .named = true,
   },
-  [aux_sym_program_repeat1] = {
+  [aux_sym__any] = {
     .visible = false,
     .named = false,
   },
@@ -77,18 +77,24 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
   switch (state) {
     case 0:
       if (eof) ADVANCE(1);
+      if (lookahead == '\n') SKIP(0)
       if (('\t' <= lookahead && lookahead <= '\r') ||
-          lookahead == ' ') SKIP(0)
-      if (('0' <= lookahead && lookahead <= '9') ||
-          ('A' <= lookahead && lookahead <= 'Z') ||
-          lookahead == '_' ||
-          ('a' <= lookahead && lookahead <= 'z')) ADVANCE(2);
+          lookahead == ' ') ADVANCE(3);
+      if (lookahead != 0) ADVANCE(2);
       END_STATE();
     case 1:
       ACCEPT_TOKEN(ts_builtin_sym_end);
       END_STATE();
     case 2:
-      ACCEPT_TOKEN(aux_sym_program_token1);
+      ACCEPT_TOKEN(aux_sym__any_token1);
+      END_STATE();
+    case 3:
+      ACCEPT_TOKEN(aux_sym__any_token1);
+      if (lookahead == '\t' ||
+          (11 <= lookahead && lookahead <= '\r') ||
+          lookahead == ' ') ADVANCE(3);
+      if (lookahead != 0 &&
+          lookahead != '\n') ADVANCE(2);
       END_STATE();
     default:
       return false;
@@ -106,29 +112,28 @@ static const TSLexMode ts_lex_modes[STATE_COUNT] = {
 static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   [0] = {
     [ts_builtin_sym_end] = ACTIONS(1),
-    [aux_sym_program_token1] = ACTIONS(1),
+    [aux_sym__any_token1] = ACTIONS(1),
   },
   [1] = {
-    [sym_program] = STATE(4),
-    [aux_sym_program_repeat1] = STATE(2),
-    [ts_builtin_sym_end] = ACTIONS(3),
-    [aux_sym_program_token1] = ACTIONS(5),
+    [sym_chunk] = STATE(4),
+    [aux_sym__any] = STATE(2),
+    [aux_sym__any_token1] = ACTIONS(3),
   },
   [2] = {
-    [aux_sym_program_repeat1] = STATE(3),
-    [ts_builtin_sym_end] = ACTIONS(7),
-    [aux_sym_program_token1] = ACTIONS(9),
+    [aux_sym__any] = STATE(3),
+    [ts_builtin_sym_end] = ACTIONS(5),
+    [aux_sym__any_token1] = ACTIONS(7),
   },
   [3] = {
-    [aux_sym_program_repeat1] = STATE(3),
-    [ts_builtin_sym_end] = ACTIONS(11),
-    [aux_sym_program_token1] = ACTIONS(13),
+    [aux_sym__any] = STATE(3),
+    [ts_builtin_sym_end] = ACTIONS(9),
+    [aux_sym__any_token1] = ACTIONS(11),
   },
 };
 
 static const uint16_t ts_small_parse_table[] = {
   [0] = 1,
-    ACTIONS(16), 1,
+    ACTIONS(14), 1,
       ts_builtin_sym_end,
 };
 
@@ -139,13 +144,12 @@ static const uint32_t ts_small_parse_table_map[] = {
 static const TSParseActionEntry ts_parse_actions[] = {
   [0] = {.entry = {.count = 0, .reusable = false}},
   [1] = {.entry = {.count = 1, .reusable = false}}, RECOVER(),
-  [3] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_program, 0),
-  [5] = {.entry = {.count = 1, .reusable = true}}, SHIFT(2),
-  [7] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_program, 1),
-  [9] = {.entry = {.count = 1, .reusable = true}}, SHIFT(3),
-  [11] = {.entry = {.count = 1, .reusable = true}}, REDUCE(aux_sym_program_repeat1, 2),
-  [13] = {.entry = {.count = 2, .reusable = true}}, REDUCE(aux_sym_program_repeat1, 2), SHIFT_REPEAT(3),
-  [16] = {.entry = {.count = 1, .reusable = true}},  ACCEPT_INPUT(),
+  [3] = {.entry = {.count = 1, .reusable = true}}, SHIFT(2),
+  [5] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_chunk, 1),
+  [7] = {.entry = {.count = 1, .reusable = true}}, SHIFT(3),
+  [9] = {.entry = {.count = 1, .reusable = true}}, REDUCE(aux_sym__any, 2),
+  [11] = {.entry = {.count = 2, .reusable = true}}, REDUCE(aux_sym__any, 2), SHIFT_REPEAT(3),
+  [14] = {.entry = {.count = 1, .reusable = true}},  ACCEPT_INPUT(),
 };
 
 #ifdef __cplusplus
