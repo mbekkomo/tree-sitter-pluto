@@ -26,7 +26,7 @@ enum Precedence
 module.exports = grammar
   name: "pluto"
 
-  extras: => []
+  extras: ($) => []
     /[\n]/
     /\s/
   
@@ -55,11 +55,11 @@ module.exports = grammar
 
     _explist: ($) => seq $._expression, anyAmountOf ",", $._expression
 
-    function_call: ($) => choice (seq $.prefix_expresion, $._args),
+    function_call: ($) => choice (seq $.prefix_expression, $._args),
                                    (seq $.prefix_expression, ":", $.identifier, $._args)
 
     _args: ($) => choice (seq "(", (optional $._explist), ")"),
-                         table
+                         $.table
 
     nil: => "nil"
     
