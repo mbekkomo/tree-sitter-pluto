@@ -33,19 +33,34 @@ module.exports = grammar
   rules:
     chunk: ($) => $._expression
 
+    _var: ($) => choice $.identifier,
+                        (seq $.prefix_expression, "[", $._expression, "]"),
+                        (seq $.prefix_expression, ".", $.identifier)
+
     _expression: ($) => choice
       $.nil,
       $.boolean,
       $.number,
-      $._prefix_expression,
+      $.prefix_expression,
       $.binary_operation,
       $.unary_operation,
       $.new_expression,
-      $.increment_expression
+      (alias $._increment, $.increment_expression)
 
-    _prefix_expression: ($) => choice
-      (seq "(", $._expression, ")")
-  
+    prefix_expression: ($) => choice
+      (seq "(", $._expression, ")"),
+      $.function_call,
+      $._var,
+      $.table
+
+    _explist: ($) => seq $._expression, anyAmountOf ",", $._expression
+
+    function_call: ($) => choice (seq $.prefix_expresion, $._args),
+                                   (seq $.prefix_expression, ":", $.identifier, $._args)
+
+    _args: ($) => choice (seq "(", (optional $._explist), ")"),
+                         table
+
     nil: => "nil"
     
     boolean: => choice "true", "false"
@@ -86,8 +101,22 @@ module.exports = grammar
 
       token choice decimal_literal, hex_literal, bin_literal
 
+    table: ($) => seq "{", (optional $._fieldlist), "}"
+
+    _fieldlist: ($) => seq $._field, (anyAmountOf $._fieldsep, $._field), optional $._fieldsep
+
+    _field: ($) => choice (seq "[", $._expression, "]", "=", $._expression),
+                          (seq $.identifier, "=", $._expression),
+                          $._expression
+
+    _fieldsep: => choice ",", ";"
+
+    new_expression: ($) => seq (plutoKeyword2 "new"), $.prefix_expression, $._args
+
+    _increment: ($) => seq "++", $.prefix_expression
+
     binary_operation: ($) => choice
-      ...([]
+      ...[
         ["or",  Precedence.Or]
         ["??",  Precedence.Or]
         ["and", Precedence.And]
@@ -110,13 +139,13 @@ module.exports = grammar
         ["*",  Precedence.ArithDiv]
         ["/",  Precedence.ArithDiv]
         ["//", Precedence.ArithDiv]
-        ["%",  Precedence.ArithDiv  ]
+        ["%",  Precedence.ArithDiv]
         ["in", Precedence.In]
-      ).map precedence $, "left"
-      ...([]
+      ].map precedence $, "left",
+      ...[
         ["..", Precedence.Concat]
         ["^", Precedence.Power]
-      ).map precedence $, "right"
+      ].map precedence $, "right"
 
     unary_operation: ($) =>
       prec.left Precedence.Unary, seq (choice
@@ -128,9 +157,8 @@ module.exports = grammar
         "~"
       ), $._expression
 
-    new_expression: ($) => seq (plutoKeyword2 "new"), $._expression
-
-    increment_expression: ($) => seq "++", /\w+/
+    _identifier: => /[a-zA-Z0-9][a-zA-Z0-9]*/
+    identifier: ($) => $._identifier
 
 function precedence($, x)
   [op, preced] => prec[x] preced, seq $._expression, op, $._expression
@@ -140,3 +168,6 @@ function plutoKeyword1(x)
 
 function plutoKeyword2(x)
   choice ...plutoKeyword1 x
+
+function anyAmountOf()
+  repeat seq ...arguments
