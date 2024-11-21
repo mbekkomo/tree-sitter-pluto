@@ -20,6 +20,8 @@ enum Precedence
   Power       // R -> ^
   In          // L -> in
 
+  Pipe
+
   Statement
   Program
 
@@ -41,22 +43,22 @@ module.exports = grammar
       $.nil,
       $.boolean,
       $.number,
+      $.table,
       $.prefix_expression,
       $.binary_operation,
       $.unary_operation,
       $.new_expression,
-      (alias $._increment, $.increment_expression)
+      (alias $._increment, $.increment_expression),
+      (alias $._pipe, $.pipe_expression)
 
-    prefix_expression: ($) => choice
-      (seq "(", $._expression, ")"),
-      $.function_call,
-      $._var,
-      $.table
+    prefix_expression: ($) => choice (seq "(", $._expression, ")"),
+                                     $.function_call,
+                                     $._var
 
-    _explist: ($) => seq $._expression, anyAmountOf ",", $._expression
+    _explist: ($) => seq $._expression, (anyAmountOf ",", $._expression)
 
     function_call: ($) => choice (seq $.prefix_expression, $._args),
-                                   (seq $.prefix_expression, ":", $.identifier, $._args)
+                                 (seq $.prefix_expression, ":", $.identifier, $._args)
 
     _args: ($) => choice (seq "(", (optional $._explist), ")"),
                          $.table
@@ -103,17 +105,26 @@ module.exports = grammar
 
     table: ($) => seq "{", (optional $._fieldlist), "}"
 
-    _fieldlist: ($) => seq $._field, (anyAmountOf $._fieldsep, $._field), optional $._fieldsep
+    _fieldlist: ($) => seq $.field, (anyAmountOf $._fieldsep, $.field), optional $._fieldsep
 
-    _field: ($) => choice (seq "[", $._expression, "]", "=", $._expression),
-                          (seq $.identifier, "=", $._expression),
-                          $._expression
+    field: ($) => choice (seq "[", (field "key", $._expression), "]", "=", (field "value", $._expression)),
+                         (seq (field "key", $.identifier) , "=", (field "value", $._expression)),
+                         $._expression
 
     _fieldsep: => choice ",", ";"
 
-    new_expression: ($) => seq (plutoKeyword2 "new"), $.prefix_expression, $._args
+    new_expression: ($) => seq (plutoKeyword "new"), $.prefix_expression, $._args
 
     _increment: ($) => seq "++", $.prefix_expression
+
+    _pipe: ($) => seq $.prefix_expression, "|>", $.pipe_function_call, anyAmountOf "|>", $.pipe_function_call
+
+    pipe_function_call: ($) => prec.right Precedence.Pipe,
+                                            choice (seq "(", (choice $.prefix_expression, $._expression), ")"),
+                                                   (seq $._var, optional $._pipe_args),
+                                                   (seq $.prefix_expression, ":", $.identifier, optional $._pipe_args)
+
+    _pipe_args: ($) => seq "|", $._expression, (anyAmountOf ",", $._expression), "|"
 
     binary_operation: ($) => choice
       ...[
@@ -163,11 +174,8 @@ module.exports = grammar
 function precedence($, x)
   [op, preced] => prec[x] preced, seq $._expression, op, $._expression
 
-function plutoKeyword1(x)
-  [x, `pluto_${x}`]
-
-function plutoKeyword2(x)
-  choice ...plutoKeyword1 x
+function plutoKeyword(x)
+  choice ...[x, `pluto_${x}`]
 
 function anyAmountOf()
   repeat seq ...arguments

@@ -1,0 +1,43 @@
+## cinclude "tree_sitter/parser.h"
+
+global treesitter = @record{}
+
+global treesitter.TSSymbol <cimport, nodecl> = @uint16
+
+global treesitter.TSLexer <cimport, nodecl> = @record{
+  lookahead: int32,
+  result_symbol: treesitter.TSSymbol,
+  advance: function(_: *treesitter.TSLexer, _: boolean): void,
+  mark_end: function(_: *treesitter.TSLexer): void,
+  get_column: function(_: *treesitter.TSLexer): uint32,
+  is_at_included_range_start: function(_: *treesitter.TSLexer <const>): boolean,
+  eof: function(_: *treesitter.TSLexer <const>): boolean,
+  log: function(__: *treesitter.TSLexer <const>, _: cstring, ...: varargs): void,
+}
+
+function treesitter.TSLexer:advance(skip: facultative(boolean)): void
+  ## if skip.type.is_nil then
+    local skip = false
+  ## end
+  self.advance(self, skip)
+end
+
+function treesitter.TSLexer:mark_end(): void
+  self.mark_end(self)
+end
+
+function treesitter.TSLexer:get_column(): uint32
+  return self.get_column(self)
+end
+
+function treesitter.TSLexer:is_at_included_range_start(): boolean
+  return self.is_at_included_range_start(self)
+end
+
+function treesitter.TSLexer:eof(): boolean
+  return self.eof(self)
+end
+
+function treesitter.TSLexer:log(fmt: string, ...: varargs): void
+  self.log(self, fmt, ...)
+end
