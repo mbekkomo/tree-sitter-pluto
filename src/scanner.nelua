@@ -79,9 +79,9 @@ local function scan_escape_sequence(lexer: *TSLexer): boolean
   return tokenize
 end
 
-## pragmas.unitname = "tree_sitter_pluto"
+## pragmas.unitname = "tree_sitter_pluto_external_scanner"
 
-global function external_scanner_scan(_: pointer, lexer: *TSLexer, valid_symbols: *[0]boolean <const>): boolean <cexport>
+global function scan(_: pointer, lexer: *TSLexer, valid_symbols: *[0]boolean <const>): boolean <cexport>
   if valid_symbols[TokenType.EscapeSequence] then
     return scan_escape_sequence(lexer)
   end
@@ -89,18 +89,18 @@ global function external_scanner_scan(_: pointer, lexer: *TSLexer, valid_symbols
   return false
 end
 
-global function external_scanner_create(): pointer <cexport>
+global function create(): pointer <cexport>
   gc:init(nilptr)
   return nilptr
 end
 
-global function external_scanner_destroy(_: pointer): void <cexport>
+global function destroy(_: pointer): void <cexport>
   gc:destroy()
 end
 
-global function external_scanner_serialize(_: pointer, _: cstring): uinteger <cexport>
+global function serialize(_: pointer, _: cstring): uinteger <cexport>
   return 0
 end
 
-global function external_scanner_deserialize(_: pointer, _: pointer, _: uinteger): void <cexport>
+global function deserialize(_: pointer, _: pointer, _: uinteger): void <cexport>
 end
