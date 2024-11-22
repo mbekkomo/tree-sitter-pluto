@@ -2,8 +2,8 @@ require "ts-parser"
 require "string"
 
 local TSLexer = treesitter.TSLexer
-local TokenType = @enum(uint16) {
-  EscapeSequence = 1,
+global TokenType = @enum(uint16) {
+  EscapeSequence = 0,
 }
 
 local EscapeSequences = @enum(int32) {
@@ -75,7 +75,7 @@ local function scan_escape_sequence(lexer: *TSLexer): boolean
       end
     end
   end
-  lexer:mark_end()
+  print(tokenize)
   return tokenize
 end
 
