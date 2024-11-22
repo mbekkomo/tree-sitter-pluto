@@ -1,0 +1,2 @@
+*.nelua linguist-language=Lua
+*.civet linguist-language=CoffeeScript
