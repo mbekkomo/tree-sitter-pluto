@@ -20,5 +20,6 @@
   "scripts": {
     "build": "tree-sitter generate && node-gyp build"
   },
-  "main": "bindings/node"
+  "main": "bindings/node",
+  "tree-sitter": {}
 }

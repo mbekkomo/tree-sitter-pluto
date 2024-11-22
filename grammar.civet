@@ -31,34 +31,37 @@ module.exports = grammar
   extras: ($) => []
     /[\n]/
     /\s/
+
+  externals: ($) => []
+    $.escape_sequence
   
   rules:
-    chunk: ($) => $._expression
+    chunk: ($) => $.escape_sequence
 
     _var: ($) => choice $.identifier,
-                        (seq $.prefix_expression, "[", $._expression, "]"),
-                        (seq $.prefix_expression, ".", $.identifier)
+                        (seq $._prefix_expression, "[", $._expression, "]"),
+                        (seq $._prefix_expression, ".", $.identifier)
 
     _expression: ($) => choice
       $.nil,
       $.boolean,
       $.number,
       $.table,
-      $.prefix_expression,
+      $._prefix_expression,
       $.binary_operation,
       $.unary_operation,
-      $.new_expression,
+      (alias $._new, $.new_expression),
       (alias $._increment, $.increment_expression),
       (alias $._pipe, $.pipe_expression)
 
-    prefix_expression: ($) => choice (seq "(", $._expression, ")"),
+    _prefix_expression: ($) => choice (seq "(", $._expression, ")"),
                                      $.function_call,
                                      $._var
 
-    _explist: ($) => seq $._expression, (anyAmountOf ",", $._expression)
+    _explist: ($) => seq $._expression, (any_amount_of ",", $._expression)
 
-    function_call: ($) => choice (seq $.prefix_expression, $._args),
-                                 (seq $.prefix_expression, ":", $.identifier, $._args)
+    function_call: ($) => choice (seq $._prefix_expression, $._args),
+                                 (seq $._prefix_expression, ":", $.identifier, $._args)
 
     _args: ($) => choice (seq "(", (optional $._explist), ")"),
                          $.table
@@ -105,7 +108,7 @@ module.exports = grammar
 
     table: ($) => seq "{", (optional $._fieldlist), "}"
 
-    _fieldlist: ($) => seq $.field, (anyAmountOf $._fieldsep, $.field), optional $._fieldsep
+    _fieldlist: ($) => seq $.field, (any_amount_of $._fieldsep, $.field), optional $._fieldsep
 
     field: ($) => choice (seq "[", (field "key", $._expression), "]", "=", (field "value", $._expression)),
                          (seq (field "key", $.identifier) , "=", (field "value", $._expression)),
@@ -113,18 +116,19 @@ module.exports = grammar
 
     _fieldsep: => choice ",", ";"
 
-    new_expression: ($) => seq (plutoKeyword "new"), $.prefix_expression, $._args
+    _new: ($) => seq (pluto_keyword "new"), $._prefix_expression, $._args
 
-    _increment: ($) => seq "++", $.prefix_expression
+    _increment: ($) => seq "++", $._var
 
-    _pipe: ($) => seq $.prefix_expression, "|>", $.pipe_function_call, anyAmountOf "|>", $.pipe_function_call
+    _pipe: ($) => prec.left Precedence.Pipe, seq $._prefix_expression, "|>", $.pipe_function_call, any_amount_of "|>", $.pipe_function_call
 
     pipe_function_call: ($) => prec.right Precedence.Pipe,
-                                            choice (seq "(", (choice $.prefix_expression, $._expression), ")"),
+                                            choice $._prefix_expression,
+                                                   $._expression,
                                                    (seq $._var, optional $._pipe_args),
-                                                   (seq $.prefix_expression, ":", $.identifier, optional $._pipe_args)
+                                                   (seq $._prefix_expression, ":", $.identifier, optional $._pipe_args)
 
-    _pipe_args: ($) => seq "|", $._expression, (anyAmountOf ",", $._expression), "|"
+    _pipe_args: ($) => seq "|", $._expression, (any_amount_of ",", $._expression), "|"
 
     binary_operation: ($) => choice
       ...[
@@ -168,14 +172,14 @@ module.exports = grammar
         "~"
       ), $._expression
 
-    _identifier: => /[a-zA-Z0-9][a-zA-Z0-9]*/
+    _identifier: => /[a-zA-Z_][a-zA-Z0-9_]*/
     identifier: ($) => $._identifier
 
 function precedence($, x)
   [op, preced] => prec[x] preced, seq $._expression, op, $._expression
 
-function plutoKeyword(x)
+function pluto_keyword(x)
   choice ...[x, `pluto_${x}`]
 
-function anyAmountOf()
+function any_amount_of()
   repeat seq ...arguments

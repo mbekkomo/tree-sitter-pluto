@@ -1,0 +1,106 @@
+require "ts-parser"
+require "string"
+
+local TSLexer = treesitter.TSLexer
+local TokenType = @enum(uint16) {
+  EscapeSequence = 1,
+}
+
+local EscapeSequences = @enum(int32) {
+  A = #[("a"):byte()]#,
+  B = #[("b"):byte()]#,
+  F = #[("f"):byte()]#,
+  N = #[("n"):byte()]#,
+  R = #[("r"):byte()]#,
+  T = #[("t"):byte()]#,
+  V = #[("v"):byte()]#,
+  X = #[("x"):byte()]#,
+  U = #[("u"):byte()]#,
+  Backslash = #[("\\"):byte()]#,
+  SingleQuote = #[("'"):byte()]#,
+  DoubleQuote = #[('"'):byte()]#,
+}
+
+local function scan_escape_sequence(lexer: *TSLexer): boolean
+  lexer.result_symbol = TokenType.EscapeSequence
+  local tokenize = false
+  if lexer.lookahead == EscapeSequences.Backslash then
+    lexer:advance()
+    switch lexer.lookahead do
+    case
+      EscapeSequences.A,
+      EscapeSequences.B,
+      EscapeSequences.F,
+      EscapeSequences.N,
+      EscapeSequences.R,
+      EscapeSequences.T,
+      EscapeSequences.V,
+      EscapeSequences.Backslash,
+      EscapeSequences.SingleQuote,
+      EscapeSequences.DoubleQuote
+    then
+      lexer:advance()
+      tokenize = true
+    case EscapeSequences.X then
+      tokenize = true
+      for _ = 1, 2 do
+        lexer:advance()
+        if string.char(lexer.lookahead):match("%X") then
+          tokenize = false
+          break
+        end
+      end
+    case EscapeSequences.U then
+      lexer:advance()
+      if lexer.lookahead == "{" then
+        tokenize = true
+        for _ = 1, 4 do
+          lexer:advance()
+          if string.char(lexer.lookahead):match("%X") then
+            tokenize = false
+            break
+          end
+        end
+        lexer:advance()
+        tokenize = lexer.lookahead == "}"
+      end
+    else
+      tokenize = true
+      for _ = 1, 2 do
+        lexer:advance()
+        if string.char(lexer.lookahead):match("%D") then
+          tokenize = false
+          break
+        end
+      end
+    end
+  end
+  lexer:mark_end()
+  return tokenize
+end
+
+## pragmas.unitname = "tree_sitter_pluto"
+
+global function external_scanner_scan(_: pointer, lexer: *TSLexer, valid_symbols: *[0]boolean <const>): boolean <cexport>
+  if valid_symbols[TokenType.EscapeSequence] then
+    return scan_escape_sequence(lexer)
+  end
+
+  return false
+end
+
+global function external_scanner_create(): pointer <cexport>
+  gc:init(nilptr)
+  return nilptr
+end
+
+global function external_scanner_destroy(_: pointer): void <cexport>
+  gc:destroy()
+end
+
+global function external_scanner_serialize(_: pointer, _: cstring): uinteger <cexport>
+  return 0
+end
+
+global function external_scanner_deserialize(_: pointer, _: pointer, _: uinteger): void <cexport>
+end
