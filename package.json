@@ -14,8 +14,9 @@
   },
   "namespace": "io.github.mbekkomo.tree-sitter-pluto",
   "devDependencies": {
-    "@danielx/civet": "^0.8.15",
-    "tree-sitter-cli": "^0.24.4"
+    "@types/node": "^22.9.3",
+    "tree-sitter-cli": "^0.24.4",
+    "typescript-language-server": "^4.3.3"
   },
   "scripts": {
     "build": "tree-sitter generate && node-gyp build"

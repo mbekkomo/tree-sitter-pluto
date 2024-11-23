@@ -62,4 +62,4 @@ devenv.local.nix
 .pre-commit-config.yaml
 
 node_modules
-/grammar.js
+.ccls*

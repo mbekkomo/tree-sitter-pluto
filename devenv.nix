@@ -20,7 +20,10 @@ in
     bun
     tree-sitter
     just
-    gcc
-    nelua
+    clang
+    
+    ccls
+    typescript-language-server
+    nodePackages.prettier
   ];
 }
